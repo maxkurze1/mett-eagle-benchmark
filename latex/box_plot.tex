@@ -1,0 +1,43 @@
+% #1 : file name
+% #2 : section name
+\NewDocumentCommand{\boxPlot}{ m m }{
+    \pgfplotstableread[col sep=comma, header=true]{#1}\datatable
+    \begin{tikzpicture}
+        \begin{semilogxaxis}[
+            footnotesize,
+            boxplot/draw direction=y,
+            xmode=log,
+            ymode=normal,
+            log ticks with fixed point,
+            % ytick=data,
+            % ytick style={draw=none},
+            % yticklabel style={align=center},
+            enlarge y limits={rel=0.3,upper},
+            enlarge x limits={rel=0.2}, axis x
+            line*=bottom, axis y line=left,% space above and below
+            xmin=1,
+            ymin=0,
+            y unit=s, y SI prefix=milli,
+            height=150pt, width=\linewidth,
+            xlabel=clients,
+            xtick={1,2,4,8,16,32},
+            % xtick=data,
+            ylabel=time,
+            cycle list name=customlist,
+            ]
+            % \pgfplotstableforeachcolumnelement{clients}\of\datatable\as\content{
+            \pgfplotsinvokeforeach{0,...,2}{
+            \addplot+[
+                line width=.8pt,
+                boxplot/box width=4pt,
+                boxplot/whisker width=6pt,
+                % visualization depends on={\thisrow{##2-error-max} \as \offset
+                %   row=\pgfplotstablerow,
+                boxplot prepared from table={ row=##1, table=\datatable, draw position=clients,
+                        lower whisker=#2-lower-whisker, upper whisker=#2-upper-whisker, lower
+                        quartile=#2-lower-quartile, upper quartile=#2-upper-quartile, median=#2-median
+                    }, ] coordinates {};
+            }
+        \end{semilogxaxis}
+    \end{tikzpicture}
+}

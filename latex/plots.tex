@@ -1,0 +1,143 @@
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=1cm]{geometry}
+\usepackage{pgfplots}
+\usepgfplotslibrary{statistics}
+\usepackage{pgfplotstable}
+\usepackage{pgffor}
+% \usepackage{placeins}
+% \usepackage{subcaption}
+% \usepackage{graphicx}
+% \usepackage{xparse}
+\usepackage{siunitx}
+\usepackage{subcaption}
+\usepgfplotslibrary{units,statistics}
+\usetikzlibrary{calc}
+
+
+% todo color difference of barplot to insignificant
+\definecolor{blue}         {RGB}{ 52, 152, 219}
+\definecolor{darkblue}     {RGB}{ 41, 128, 185}
+\definecolor{turquoise}    {RGB}{ 26, 188, 156}
+\definecolor{darkturquoise}{RGB}{ 22, 160, 133}
+\definecolor{red}          {RGB}{231,  76,  60}
+\definecolor{darkred}      {RGB}{192,  57,  43}
+\definecolor{green}        {RGB}{ 46, 204, 113}
+\definecolor{darkgreen}    {RGB}{ 39, 174,  96}
+\definecolor{magenta}      {RGB}{155,  89, 182} % amethyst
+\definecolor{darkmagenta}  {RGB}{142,  68, 173}
+\definecolor{dark-gray}    {RGB}{127, 140, 141}
+\definecolor{gray}         {RGB}{149, 165, 166}
+\definecolor{orange}       {RGB}{230, 126,  34}
+\definecolor{yellow}       {RGB}{241, 196,  15}
+
+\pgfplotscreateplotcyclelist{customlist}{
+  {      blue,fill=      blue!20},
+  { turquoise,fill= turquoise!20},
+  {     green,fill=     green!20},
+  {    yellow,fill=    yellow!20},
+  {    orange,fill=    orange!20},
+  {       red,fill=       red!20},
+  {   magenta,fill=   magenta!20}
+}
+
+% reading boxplot prepared values from a table
+% see: https://tex.stackexchange.com/a/117439
+% and custom box plot drawing handler to keep
+% the boxplot size consistent on a logarithmic axis
+\makeatletter
+\pgfplotsset{compat=1.18}
+\pgfplotsset{
+  boxplot/box width/.initial=5pt,
+  boxplot/whisker width/.initial=5pt,
+  boxplot/draw/whisker/.code 2 args={
+      \draw [/pgfplots/boxplot/every whisker/.try]
+      (boxplot cs:#1) -- (boxplot cs:#2)
+      (boxplot cs:#2) -- +(left:\pgfkeysvalueof{/pgfplots/boxplot/whisker width})
+      (boxplot cs:#2) -- +(right:\pgfkeysvalueof{/pgfplots/boxplot/whisker width})
+      ;
+    },
+  boxplot/draw/box/.code={
+      \draw [/pgfplots/boxplot/every box/.try]
+      ($(boxplot box cs:\pgfplotsboxplotvalue{lower quartile},0.5) + (left:\pgfkeysvalueof{/pgfplots/boxplot/box width})$)
+      rectangle
+      ($(boxplot box cs:\pgfplotsboxplotvalue{upper quartile},0.5) + (right:\pgfkeysvalueof{/pgfplots/boxplot/box width})$)
+      ;
+    },
+  boxplot/draw/median/.code={
+      \draw [/pgfplots/boxplot/every median/.try]
+      ($(boxplot box cs:\pgfplotsboxplotvalue{median},0.5) + (left:\pgfkeysvalueof{/pgfplots/boxplot/box width})$)
+      --
+      ($(boxplot box cs:\pgfplotsboxplotvalue{median},0.5) + (right:\pgfkeysvalueof{/pgfplots/boxplot/box width})$)
+      ;
+    },
+  boxplot prepared from table/.code={
+      \def\tikz@plot@handler{\pgfplotsplothandlerboxplotprepared}%
+      \pgfplotsset{
+        /pgfplots/boxplot prepared,
+        /pgfplots/boxplot prepared from table/.cd,
+        #1,
+      }
+    },
+  % boxplot prepared from table/.style={
+  %   /pgfplots/boxplot prepared,
+  %   % /pgfplots/boxplot/draw/whisker/.code 2 args={
+  %   %   \path ##1 -- ##2;
+  %   % }
+  % },
+  /pgfplots/boxplot prepared from table/.cd,
+  box width/.initial=1em,
+  row/.initial=0,
+  table/.code={\pgfplotstablecopy{#1}\to\boxplot@datatable},
+  make style readable from table/.style={
+      #1/.code={
+          \pgfplotstablegetelem{\pgfkeysvalueof{/pgfplots/boxplot prepared from table/row}}{##1}\of\boxplot@datatable
+          \pgfplotsset{boxplot/#1/.expand once={\pgfplotsretval}}
+        }
+    },
+  make style readable from table=draw position,
+  make style readable from table=lower whisker,
+  make style readable from table=upper whisker,
+  make style readable from table=lower quartile,
+  make style readable from table=upper quartile,
+  make style readable from table=median,
+  make style readable from table=lower notch,
+  make style readable from table=upper notch,
+}
+\makeatother
+
+\input{bar_plot}
+\input{box_plot}
+% \input{bar_plot_copy}
+
+\begin{document}
+
+\begin{figure}
+  \begin{subfigure}[t]{0.45\linewidth}
+    \centering
+    \boxPlot{../l4-cpp.csv}{worker-creation}
+    \caption{l4 worker creation}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.45\linewidth}
+    \centering
+    \barPlot{../l4-cpp.csv}
+    \caption{l4 cpp}
+  \end{subfigure}
+\end{figure}
+% \begin{figure}
+%   \centering
+%   \barPlot{../l4_cpp_diff.csv}
+%   \caption{l4 cpp diff}
+% \end{figure}
+\begin{figure}
+  \begin{subfigure}[t]{0.45\linewidth}
+    \barPlot{../ow-py.csv}*[530]
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.45\linewidth}
+    \barPlot{../l4-py.csv}[530]
+  \end{subfigure}
+  \caption{Function invocation duration in OpenWhisk (left) and L4 (right)}
+\end{figure}
+
+\end{document}

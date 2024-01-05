@@ -1,0 +1,63 @@
+% #1 = (star) -> without runtime creation/deletion
+% #2 = file name
+% #3 = (star) -> openwhisk plot (different naming scheme)
+% #4 = optional 'ymax'
+\NewDocumentCommand{\barPlot}{ s m s o }{
+    \begin{tikzpicture}
+        \pgfplotsset{compat=1.18}
+        \begin{semilogxaxis}[
+            footnotesize,
+            ybar stacked,
+            log ticks with fixed point,
+            xmode=log,
+            ymode=normal,
+            enlarge y limits={rel=0.3,upper}, % space above
+            enlarge x limits={rel=0.1},
+            axis x line*=bottom,
+            axis y line=left,
+            xmin=1,
+            xmax=16,
+            ymin=0,
+            \IfValueT{#4}{
+            ymax=#4,
+            }
+            y unit=s,
+            y SI prefix=milli,
+            height=207pt,
+            width=\linewidth, % default = 240pt
+            xlabel=clients,
+            xtick=data,
+            ylabel=time,
+            legend style={
+                cells={anchor=west},
+                legend pos=north west,
+                draw=none
+            },
+            ]
+
+            \addplot[line width=.8pt,blue      ,fill=      blue!20] table [col sep=comma, y=communication-send-mean,    x=clients] {#2};
+            \addlegendentry{comm. send}
+            \IfBooleanF{#3}{
+            \addplot[line width=.8pt,turquoise ,fill= turquoise!20] table [col sep=comma, y=worker-creation-mean,       x=clients] {#2};
+            \addlegendentry{worker creation}
+            \IfBooleanF{#1}{
+            \addplot[line width=.8pt,green     ,fill=     green!20] table [col sep=comma, y=runtime-creation-mean,      x=clients] {#2};
+            \addlegendentry{runtime creation}
+            }
+            }
+            \addplot[line width=.8pt,yellow    ,fill=    yellow!20] table [col sep=comma, y=function-delta-mean,        x=clients] {#2};
+            \addlegendentry{function exec.}
+            \IfBooleanF{#3}{
+            \IfBooleanF{#1}{
+            \addplot[line width=.8pt,orange    ,fill=    orange!20] table [col sep=comma, y=runtime-deletion-mean,      x=clients] {#2};
+            \addlegendentry{runtime deletion}
+            }
+            \addplot[line width=.8pt,red       ,fill=       red!20] table [col sep=comma, y=worker-deletion-mean,       x=clients] {#2};
+            \addlegendentry{worker deletion}
+            }
+            \addplot[line width=.8pt,magenta   ,fill=   magenta!20] table [col sep=comma, y=communication-receive-mean, x=clients] {#2};
+            \addlegendentry{comm. receive}
+
+        \end{semilogxaxis}
+    \end{tikzpicture}
+}
